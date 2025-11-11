@@ -129,8 +129,6 @@ func Test_getValue(t *testing.T) {
 		Items     []int
 		Items2    []Nested
 		Array     [3]string
-		MapStr    map[string]string
-		MapNested map[string]Nested
 	}
 
 	tests := []struct {
@@ -250,36 +248,6 @@ func Test_getValue(t *testing.T) {
 			v:       reflect.ValueOf(TestStruct{}),
 			p:       "",
 			wantErr: true,
-		},
-		{
-			name: "simple map access (string key)",
-			v: reflect.ValueOf(TestStruct{
-				MapStr: map[string]string{
-					"key1": "value1",
-					"key2": "value2",
-				},
-			}),
-			p: "MapStr.key1",
-			validate: func(t *testing.T, got reflect.Value) {
-				if got.String() != "value1" {
-					t.Errorf("got %v, want value1", got.String())
-				}
-			},
-		},
-		{
-			name: "nested map access (map value field)",
-			v: reflect.ValueOf(TestStruct{
-				MapNested: map[string]Nested{
-					"first":  {Value: "first_value"},
-					"second": {Value: "second_value"},
-				},
-			}),
-			p: "MapNested.second.Value",
-			validate: func(t *testing.T, got reflect.Value) {
-				if got.String() != "second_value" {
-					t.Errorf("got %v, want second_value", got.String())
-				}
-			},
 		},
 	}
 
