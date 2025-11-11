@@ -10,22 +10,36 @@ import (
 	"github.com/spf13/cast"
 )
 
+// Extract names from tags.
+func namesFromTags(f reflect.StructField) []string {
+	names := make([]string, 0, 2)
+
+	for _, tag := range []string{"json", "yaml"} {
+		tag := strings.SplitN(f.Tag.Get(tag), ",", 2)
+		if len(tag) > 0 && tag[0] != "" {
+			names = append(names, tag[0])
+		}
+	}
+
+	return names
+}
+
 // Returns the field with the given name (case-insensitive).
 func structField(s reflect.Value, n string) (reflect.Value, error) {
 	for i := 0; i < s.NumField(); i++ {
 		// Take the name from the struct field.
 		fieldType := s.Type().Field(i)
-		name := fieldType.Name
+		names := []string{fieldType.Name}
 
-		// Extract name from a tag (ignore if no tag).
-		tag := strings.SplitN(fieldType.Tag.Get("json"), ",", 2)
-		if len(tag) > 0 && tag[0] != "" {
-			name = tag[0]
-		}
+		// Extract names from tags.
+		tagNames := namesFromTags(fieldType)
+		names = append(names, tagNames...)
 
-		// Compare the name with the given name.
-		if strings.EqualFold(name, n) {
-			return s.Field(i), nil
+		// Compare the names with the given name.
+		for _, name := range names {
+			if strings.EqualFold(name, n) {
+				return s.Field(i), nil
+			}
 		}
 	}
 

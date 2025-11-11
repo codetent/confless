@@ -32,7 +32,7 @@ confless.Load(config)
 
 ### Files (JSON/YAML)
 
-Load configuration from JSON or YAML files. Files are loaded in registration order and merged together.
+Load configuration from JSON or YAML files. Files are loaded in registration order and merged together. Missing files are silently skipped.
 
 ```go
 // Register a JSON file
@@ -63,11 +63,14 @@ database:
   port: 5432
 ```
 
-**Note**: Missing files are silently skipped - your application won't fail if a config file doesn't exist.
+The keys either have to match the field names in the struct or be annotated with tags.
 
-### Dynamic File Paths
+#### Dynamic File Paths
 
 You can also register a field in your configuration that contains the path to another configuration file. This is useful for environment-specific configurations.
+
+The file field must be a dot-separated path to the field in the struct.
+Either the key has to match the actual field name or be annotated with a tag.
 
 ```go
 type Config struct {
@@ -93,19 +96,8 @@ confless.RegisterEnv("APP")
 - Environment variables use underscores: `APP_DATABASE_HOST`
 - They are converted to dot notation to represent a path: `database.host`
 - Arrays are represented as a dot-separated list of indices: `items.0`
+- Tag annotations can be used to override the key
 - The prefix is removed: `APP_` → removed
-
-**Examples:**
-```bash
-# Sets config.name
-export APP_NAME=MyApp
-
-# Sets config.database.host
-export APP_DATABASE_HOST=localhost
-
-# Sets config.database.port (automatically converted to int)
-export APP_DATABASE_PORT=5432
-```
 
 **Example:**
 ```go
@@ -133,10 +125,11 @@ confless.Load(&config)
 **Naming Convention:**
 - Flags use dashes: `--database-host`
 - They are converted to dot notation: `database.host`
+- Tag annotations can be used to override the key
 
 **Example:**
 ```bash
-./app --name=MyApp --port=3000 --database-host=localhost
+./app --name=MyApp --database-host=localhost
 ```
 
 ## Precedence
@@ -152,7 +145,13 @@ This means environment variables will always override file and flag values, maki
 ## Example
 
 ```go
-config := &Config{Name: "DefaultApp", Port: 8080, Config: "production.json"}
+flag.String("name", "", "the name of the object")
+
+config := &Config{
+    Name: "DefaultApp",
+    Port: 8080,
+    Config: "production.json",
+}
 
 confless.RegisterFile("config.json", confless.FileFormatJSON)
 confless.RegisterFileField("config", confless.FileFormatJSON)
@@ -165,6 +164,5 @@ confless.Load(config)
 
 **Usage:**
 ```bash
-./app --name=MyApp --port=3000
-APP_NAME=Production APP_PORT=9000 ./app
+APP_PORT=9000 ./app --name=MyApp
 ```
