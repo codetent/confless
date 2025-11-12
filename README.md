@@ -42,7 +42,7 @@ The following basic types can be set from all sources:
 - bool
 - int
 - uint
-- float64
+- float
 
 Complex types like slices and maps can only be set directly in the struct or by loading values from files.
 
