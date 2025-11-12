@@ -2,8 +2,6 @@
 
 **configuration with less effort** - A simple, flexible Go library for loading configuration from multiple sources with minimal boilerplate.
 
-## Features
-
 - **Less Boilerplate**: No need to manually parse flags, read files, and merge configurations
 - **Less Complexity**: Simple API that does one thing well
 - **Less Configuration**: Reasonable defaults with optional customization
@@ -28,9 +26,38 @@ flag.Parse()
 confless.Load(config)
 ```
 
-## Configuration Sources
+## Basics
 
-### Files (JSON/YAML)
+### Keys
+
+Field names are taken from struct fields.
+Tag annotations like `json` and `yaml` can be used to override the field name.
+
+### Values
+
+Types are taken from struct fields.
+
+The following basic types can be set from all sources:
+- string
+- bool
+- int
+- uint
+- float64
+
+Complex types like slices and maps can only be set directly in the struct or by loading values from files.
+
+Default values for fields can be set when initializing the struct.
+They will be overridden by values from sources if set.
+
+## Sources
+
+Sources are applied in the following order (later sources override earlier ones):
+
+1. **Files** (in registration order)
+2. **Command-line flags**
+3. **Environment variables** (highest precedence)
+
+### Files
 
 Load configuration from JSON or YAML files. Files are loaded in registration order and merged together. Missing files are silently skipped.
 
@@ -63,14 +90,11 @@ database:
   port: 5432
 ```
 
-The keys either have to match the field names in the struct or be annotated with tags.
-
 #### Dynamic File Paths
 
 You can also register a field in your configuration that contains the path to another configuration file. This is useful for environment-specific configurations.
 
 The file field must be a dot-separated path to the field in the struct.
-Either the key has to match the actual field name or be annotated with a tag.
 
 ```go
 type Config struct {
@@ -85,19 +109,18 @@ confless.Load(config)
 
 ### Environment Variables
 
-Load configuration from environment variables with a specified prefix. Environment variable names are converted to dot-separated paths.
+Load configuration from environment variables with a specified prefix.
 
 ```go
 // Register environment variables with prefix "APP"
 confless.RegisterEnv("APP")
 ```
 
-**Naming Convention:**
+**Key Naming Convention:**
 - Environment variables use underscores: `APP_DATABASE_HOST`
-- They are converted to dot notation to represent a path: `database.host`
-- Arrays are represented as a dot-separated list of indices: `items.0`
-- Tag annotations can be used to override the key
-- The prefix is removed: `APP_` → removed
+- They start with the specified prefix: `APP_`
+- Array items are represented by their index: `APP_ITEMS_0`
+- They are converted to dot notation to represent a path to fields: `database.host`
 
 **Example:**
 ```go
@@ -111,7 +134,8 @@ confless.Load(&config)
 
 ### Command-Line Flags
 
-Load configuration from Go's standard `flag` package. Flag names are converted to dot-separated paths.
+Load configuration from Go's standard `flag` package.
+Matching flags are automatically detected and if set, their values will be used to populate the struct.
 
 ```go
 flag.String("name", "", "Application name")
@@ -122,47 +146,50 @@ flag.Parse()
 confless.Load(&config)
 ```
 
-**Naming Convention:**
+**Key Naming Convention:**
 - Flags use dashes: `--database-host`
-- They are converted to dot notation: `database.host`
-- Tag annotations can be used to override the key
+- Array items are represented by their index: `--items-0`
+- They are converted to dot notation to represent a path to fields: `database.host`
 
 **Example:**
 ```bash
 ./app --name=MyApp --database-host=localhost
 ```
 
-## Precedence
-
-Configuration sources are applied in the following order (later sources override earlier ones):
-
-1. **Files** (in registration order)
-2. **Command-line flags**
-3. **Environment variables** (highest precedence)
-
-This means environment variables will always override file and flag values, making them perfect for deployment-specific overrides.
-
 ## Example
 
 ```go
+// Register flags to load
 flag.String("name", "", "the name of the object")
 
+// Set default values for fields
 config := &Config{
     Name: "DefaultApp",
     Port: 8080,
     Config: "production.json",
 }
 
+// Register sources to load
 confless.RegisterFile("config.json", confless.FileFormatJSON)
 confless.RegisterFileField("config", confless.FileFormatJSON)
 confless.RegisterEnv("APP")
 confless.RegisterFlags(flag.CommandLine)
 
+// Parse flags before loading
 flag.Parse()
-confless.Load(config)
+
+// Load configuration
+err := confless.Load(config)
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 **Usage:**
 ```bash
 APP_PORT=9000 ./app --name=MyApp
+
+# Sets port to 9000 instead of 8080 (default)
+# Sets name to "MyApp" instead of "DefaultApp" (default)
+# All other fields are loaded from the config.json file (if exists) or the default values are taken
 ```
