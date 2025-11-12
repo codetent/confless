@@ -7,13 +7,13 @@
 - **Less Configuration**: Reasonable defaults with optional customization
 - **More Flexibility**: Support for multiple sources with automatic precedence
 
-## Installation
+## 📦 Installation
 
 ```bash
 go get github.com/codetent/confless
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ```go
 config := &Config{Port: 8080}
@@ -26,7 +26,7 @@ flag.Parse()
 confless.Load(config)
 ```
 
-## Basics
+## 📚 Basics
 
 ### Keys
 
@@ -49,7 +49,7 @@ Complex types like slices and maps can only be set directly in the struct or by 
 Default values for fields can be set when initializing the struct.
 They will be overridden by values from sources if set.
 
-## Sources
+## 📁 Sources
 
 Sources are applied in the following order (later sources override earlier ones):
 
@@ -156,7 +156,7 @@ confless.Load(&config)
 ./app --name=MyApp --database-host=localhost
 ```
 
-## Example
+## 💡 Example
 
 ```go
 // Register flags to load
