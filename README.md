@@ -1,6 +1,13 @@
-# confless
+<br>
+<div align="center">
+  <img height="50" src="doc/confless.svg">
+  <p align="center">
+    <b>configuration with less effort</b>
+  </p>
+</div>
+<br>
 
-**configuration with less effort** - A simple, flexible Go library for loading configuration from multiple sources with minimal boilerplate.
+A simple, flexible Go library for loading configuration from multiple sources with minimal boilerplate.
 
 - **Less Boilerplate**: No need to manually parse flags, read files, and merge configurations
 - **Less Complexity**: Simple API that does one thing well
