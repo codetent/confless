@@ -1,0 +1,6 @@
+{
+    "image": "golang:1.25.4-trixie",
+    "extensions": [
+        "golang.go"
+    ]
+}
