@@ -18,8 +18,13 @@ func MakeNewObject(t reflect.Type) any {
 	obj := reflect.New(objType)
 
 	// Add the necessary number of pointers to the object.
+	// For each additional pointer level, create a new pointer to the current pointer.
 	for i := 0; i < (depth - 1); i++ {
-		obj = obj.Addr()
+		// Create a new pointer to the current pointer type
+		ptrToPtr := reflect.New(obj.Type())
+		// Set the value of the new pointer to point to the current object
+		ptrToPtr.Elem().Set(obj)
+		obj = ptrToPtr
 	}
 
 	return obj.Interface()
