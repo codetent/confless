@@ -47,6 +47,8 @@ func populateByEnv(env []string, pre string, obj any) error {
 		return ErrObjectNotAPointer
 	}
 
+	prefix := strings.ToLower(pre) + "_"
+
 	for _, env := range env {
 		// Split the environment variable into key and value.
 		parts := strings.SplitN(env, "=", 2)
@@ -56,7 +58,7 @@ func populateByEnv(env []string, pre string, obj any) error {
 
 		// Remove the prefix from the key.
 		key := strings.ToLower(parts[0])
-		key, ok := strings.CutPrefix(key, pre+"_")
+		key, ok := strings.CutPrefix(key, prefix)
 		if !ok {
 			continue
 		}
