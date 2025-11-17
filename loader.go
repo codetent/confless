@@ -118,7 +118,7 @@ func (l *loader) Load(obj any) error {
 
 			return fmt.Errorf("failed to open file: %w", err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 
 		// Populate the object by the file.
 		err = populateByFile(f, string(file.format), obj)

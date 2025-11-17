@@ -28,7 +28,7 @@ func Test_populateByFlags(t *testing.T) {
 			fset: func() *flag.FlagSet {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("name", "", "name flag")
-				fset.Parse([]string{"--name=MyApp"})
+				_ = fset.Parse([]string{"--name=MyApp"})
 				return fset
 			}(),
 			obj: &struct {
@@ -47,7 +47,7 @@ func Test_populateByFlags(t *testing.T) {
 			fset: func() *flag.FlagSet {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("port", "", "port flag")
-				fset.Parse([]string{"--port=8080"})
+				_ = fset.Parse([]string{"--port=8080"})
 				return fset
 			}(),
 			obj: &struct {
@@ -66,7 +66,7 @@ func Test_populateByFlags(t *testing.T) {
 			fset: func() *flag.FlagSet {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("debug", "", "debug flag")
-				fset.Parse([]string{"--debug=true"})
+				_ = fset.Parse([]string{"--debug=true"})
 				return fset
 			}(),
 			obj: &struct {
@@ -85,7 +85,7 @@ func Test_populateByFlags(t *testing.T) {
 			fset: func() *flag.FlagSet {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("database-host", "", "database host flag")
-				fset.Parse([]string{"--database-host=localhost"})
+				_ = fset.Parse([]string{"--database-host=localhost"})
 				return fset
 			}(),
 			obj: &struct {
@@ -110,7 +110,7 @@ func Test_populateByFlags(t *testing.T) {
 			fset: func() *flag.FlagSet {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("items-0", "", "items[0] flag")
-				fset.Parse([]string{"--items-0=42"})
+				_ = fset.Parse([]string{"--items-0=42"})
 				return fset
 			}(),
 			obj: &struct {
@@ -136,7 +136,7 @@ func Test_populateByFlags(t *testing.T) {
 				fset.String("name", "default", "name flag")
 				fset.String("port", "8080", "port flag")
 				// Parse but don't set any flags
-				fset.Parse([]string{})
+				_ = fset.Parse([]string{})
 				return fset
 			}(),
 			obj: &struct {
@@ -162,7 +162,7 @@ func Test_populateByFlags(t *testing.T) {
 			fset: func() *flag.FlagSet {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("count", "", "count flag")
-				fset.Parse([]string{"--count=100"})
+				_ = fset.Parse([]string{"--count=100"})
 				return fset
 			}(),
 			obj: &struct {
@@ -181,7 +181,7 @@ func Test_populateByFlags(t *testing.T) {
 			fset: func() *flag.FlagSet {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("ratio", "", "ratio flag")
-				fset.Parse([]string{"--ratio=3.14"})
+				_ = fset.Parse([]string{"--ratio=3.14"})
 				return fset
 			}(),
 			obj: &struct {
@@ -201,7 +201,7 @@ func Test_populateByFlags(t *testing.T) {
 				fset := flag.NewFlagSet("test", flag.ContinueOnError)
 				fset.String("database-host", "", "database host")
 				fset.String("database-port", "", "database port")
-				fset.Parse([]string{"--database-host=localhost", "--database-port=5432"})
+				_ = fset.Parse([]string{"--database-host=localhost", "--database-port=5432"})
 				return fset
 			}(),
 			obj: &struct {
