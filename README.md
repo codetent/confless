@@ -7,6 +7,9 @@
 </div>
 <br>
 
+![GitHub Check](https://github.com/codetent/confless/workflows/Check/badge.svg)
+![GitHub License](https://img.shields.io/github/license/codetent/confless)
+
 A simple, flexible Go library for loading configuration from multiple sources with minimal boilerplate.
 
 - **Less Boilerplate**: No need to manually parse flags, read files, and merge configurations
