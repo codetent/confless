@@ -136,9 +136,11 @@ func (l *loader) Load(obj any) error {
 	}
 
 	// Load the environment variables.
-	err := populateByEnv(l.envReader(), l.envPrefix, obj)
-	if err != nil {
-		return fmt.Errorf("failed to load env: %w", err)
+	if l.envPrefix != "" {
+		err := populateByEnv(l.envReader(), l.envPrefix, obj)
+		if err != nil {
+			return fmt.Errorf("failed to load env: %w", err)
+		}
 	}
 
 	return nil
