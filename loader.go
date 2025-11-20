@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/codetent/confless/pkg/dotpath"
 	"github.com/spf13/afero"
 )
 
@@ -21,19 +20,13 @@ type configFile struct {
 	format fileFormat
 }
 
-type configFileField struct {
-	field  string
-	format fileFormat
-}
-
 type loader struct {
 	fs        afero.Fs
 	envReader func() []string
 
-	envPrefix  string
-	flagSets   []*flag.FlagSet
-	files      []*configFile
-	fileFields []*configFileField
+	envPrefix string
+	flagSets  []*flag.FlagSet
+	files     []*configFile
 }
 
 // Creates a new loader with the given options.
@@ -67,14 +60,6 @@ func (l *loader) RegisterFile(path string, format fileFormat) {
 	})
 }
 
-// Register a field in the config that contains the path to a file to load.
-func (l *loader) RegisterFileField(field string, format fileFormat) {
-	l.fileFields = append(l.fileFields, &configFileField{
-		field:  field,
-		format: format,
-	})
-}
-
 // Register the flags to load.
 // Names are converted to dot-separated paths (e.g. "my-flag" -> "my.flag").
 // Note that flags must be parsed before loading.
@@ -84,25 +69,19 @@ func (l *loader) RegisterFlags(f *flag.FlagSet) {
 
 // Populate the object by applying the registered sources.
 func (l *loader) Load(obj any) error {
-	files := make([]*configFile, 0, len(l.fileFields)+len(l.files))
+	files := make([]*configFile, 0, len(l.files))
 	files = append(files, l.files...)
 
-	// Collect files from file fields.
-	for _, field := range l.fileFields {
-		// Get the value of the field.
-		value, err := dotpath.Get(obj, field.field)
-		if err != nil {
-			return fmt.Errorf("failed to get field: %w", err)
-		}
-
-		path, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("field is not a string: %s", field.field)
+	// Add file paths from tagged fields.
+	for field, format := range findFileFields(obj) {
+		format := fileFormat(format)
+		if format == "" {
+			format = FileFormatJSON
 		}
 
 		files = append(files, &configFile{
-			path:   path,
-			format: field.format,
+			path:   field.String(),
+			format: format,
 		})
 	}
 

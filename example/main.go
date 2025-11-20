@@ -10,7 +10,7 @@ import (
 
 type demo struct {
 	Name    string
-	Config  string `json:"config"`
+	Config  string `json:"config" confless:"file"`
 	Age     int    `json:"age"`
 	Objects struct {
 		Apple string
@@ -32,7 +32,6 @@ func main() {
 
 	confless.RegisterEnv("example")
 	confless.RegisterFile("config.json", confless.FileFormatJSON)
-	confless.RegisterFileField("config", confless.FileFormatJSON)
 	confless.RegisterFlags(flag.CommandLine)
 
 	flag.Parse()

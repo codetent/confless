@@ -23,7 +23,7 @@ var (
 // Names are converted to dot-separated paths (e.g. "my-flag" -> "my.flag").
 func populateByFlags(fset *flag.FlagSet, obj any) error {
 	// Check if the object is a pointer.
-	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
+	if reflect.TypeOf(obj).Kind() != reflect.Pointer {
 		return ErrObjectNotAPointer
 	}
 
@@ -80,7 +80,7 @@ func populateByEnv(env []string, pre string, obj any) error {
 // Overrides existing values only if set in the file.
 func populateByFile(r io.Reader, format string, obj any) error {
 	// Check if the object is a pointer.
-	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
+	if reflect.TypeOf(obj).Kind() != reflect.Pointer {
 		return ErrObjectNotAPointer
 	}
 

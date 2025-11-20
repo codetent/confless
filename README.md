@@ -102,18 +102,18 @@ database:
 
 #### Dynamic File Paths
 
-You can also register a field in your configuration that contains the path to another configuration file. This is useful for environment-specific configurations.
+You can mark a field in your configuration with the `confless:"file"` tag to automatically load it as a configuration file. This is useful for environment-specific configurations.
 
-The file field must be a dot-separated path to the field in the struct.
+The format can be specified explicitly in the tag (`confless:"file,format=json"`) otherwise it defaults to JSON.
 
 ```go
 type Config struct {
-    ConfigFile string `json:"config_file"` // Path to additional config
+    ConfigFile string `json:"config_file" confless:"file"` // Path to additional config
 }
 
 config := &Config{ConfigFile: "production.json"}
 
-confless.RegisterFileField("config_file", confless.FileFormatJSON)
+// The field is automatically detected via the confless:"file" tag
 confless.Load(config)
 ```
 
@@ -181,7 +181,7 @@ config := &Config{
 
 // Register sources to load
 confless.RegisterFile("config.json", confless.FileFormatJSON)
-confless.RegisterFileField("config", confless.FileFormatJSON)
+// Config field is automatically detected via confless:"config=true" tag
 confless.RegisterEnv("APP")
 confless.RegisterFlags(flag.CommandLine)
 
