@@ -6,11 +6,6 @@ import (
 	"strings"
 )
 
-type tagOptions struct {
-	File   string
-	Format string
-}
-
 // Parses the tag into a map of key-value pairs.
 // For example, the tag "file,format=yaml" will be parsed into:
 //
@@ -62,17 +57,16 @@ func findFileFields(o any) iter.Seq2[reflect.Value, string] {
 			field := v.Type().Field(i)
 			value := unpackValue(v.Field(i))
 
-			// Parse field tag and only continue if the file key is set.
+			// Parse field tag.
 			kvs := parseTag(field.Tag)
-			if kvs["file"] == "" {
-				continue
-			}
 
 			switch value.Kind() {
 			case reflect.String:
-				// Yield the field value and format if the field is a string.
-				if !yield(value, kvs["format"]) {
-					return
+				// If the field has a file tag, yield it.
+				if kvs["file"] != "" {
+					if !yield(value, kvs["format"]) {
+						return
+					}
 				}
 			case reflect.Struct:
 				// Recursively find file fields in the nested struct.

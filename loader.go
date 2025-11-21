@@ -74,13 +74,18 @@ func (l *loader) Load(obj any) error {
 
 	// Add file paths from tagged fields.
 	for field, format := range findFileFields(obj) {
+		path := field.String()
+		if path == "" {
+			continue
+		}
+
 		format := fileFormat(format)
 		if format == "" {
 			format = FileFormatJSON
 		}
 
 		files = append(files, &configFile{
-			path:   field.String(),
+			path:   path,
 			format: format,
 		})
 	}

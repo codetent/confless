@@ -254,7 +254,7 @@ func Test_loader_ConfigTag(t *testing.T) {
 				}()),
 			},
 			obj: &struct {
-				ConfigFile string `confless:"config=true"`
+				ConfigFile string `confless:"file"`
 				Name       string
 				Port       int
 			}{
@@ -284,7 +284,7 @@ func Test_loader_ConfigTag(t *testing.T) {
 				}()),
 			},
 			obj: &struct {
-				ConfigFile string `confless:"config=true,format=yaml"`
+				ConfigFile string `confless:"file,format=yaml"`
 				Name       string
 				Port       int
 			}{
@@ -315,13 +315,13 @@ func Test_loader_ConfigTag(t *testing.T) {
 			},
 			obj: &struct {
 				Settings struct {
-					ConfigPath string `confless:"config=true"`
+					ConfigPath string `confless:"file"`
 				}
 				Name string
 				Port int
 			}{
 				Settings: struct {
-					ConfigPath string `confless:"config=true"`
+					ConfigPath string `confless:"file"`
 				}{
 					ConfigPath: "nested.json",
 				},
@@ -346,7 +346,7 @@ func Test_loader_ConfigTag(t *testing.T) {
 				WithFS(afero.NewMemMapFs()),
 			},
 			obj: &struct {
-				ConfigFile string `confless:"config=true"`
+				ConfigFile string `confless:"file"`
 				Name       string
 			}{
 				ConfigFile: "",
@@ -367,7 +367,7 @@ func Test_loader_ConfigTag(t *testing.T) {
 				WithFS(afero.NewMemMapFs()),
 			},
 			obj: &struct {
-				ConfigFile string `confless:"config=true"`
+				ConfigFile string `confless:"file"`
 				Name       string
 			}{
 				ConfigFile: "nonexistent.json",
