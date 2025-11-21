@@ -2,6 +2,7 @@ package confless
 
 import (
 	"flag"
+	"reflect"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -235,18 +236,16 @@ func Test_loader_RegisterFile(t *testing.T) {
 	}
 }
 
-func Test_loader_RegisterFileField(t *testing.T) {
+func Test_loader_ConfigTag(t *testing.T) {
 	tests := []struct {
 		name    string
 		opts    []loaderOption
-		field   string
-		format  fileFormat
 		obj     any
 		wantErr bool
 		verify  func(t *testing.T, obj any)
 	}{
 		{
-			name: "load from file path in field",
+			name: "load from file path in tagged field",
 			opts: []loaderOption{
 				WithFS(func() afero.Fs {
 					fs := afero.NewMemMapFs()
@@ -254,10 +253,8 @@ func Test_loader_RegisterFileField(t *testing.T) {
 					return fs
 				}()),
 			},
-			field:  "ConfigFile",
-			format: FileFormatJSON,
 			obj: &struct {
-				ConfigFile string
+				ConfigFile string `confless:"config=true"`
 				Name       string
 				Port       int
 			}{
@@ -265,54 +262,123 @@ func Test_loader_RegisterFileField(t *testing.T) {
 			},
 			wantErr: false,
 			verify: func(t *testing.T, obj any) {
-				cfg := obj.(*struct {
-					ConfigFile string
-					Name       string
-					Port       int
-				})
-				if cfg.Name != "ProductionApp" {
-					t.Errorf("expected Name to be 'ProductionApp', got '%s'", cfg.Name)
+				// Use reflection to get values to avoid type assertion issues with tags
+				v := reflect.ValueOf(obj).Elem()
+				name := v.FieldByName("Name").String()
+				port := int(v.FieldByName("Port").Int())
+				if name != "ProductionApp" {
+					t.Errorf("expected Name to be 'ProductionApp', got '%s'", name)
 				}
-				if cfg.Port != 9000 {
-					t.Errorf("expected Port to be 9000, got %d", cfg.Port)
+				if port != 9000 {
+					t.Errorf("expected Port to be 9000, got %d", port)
 				}
 			},
 		},
 		{
-			name: "error when field is not a string",
+			name: "load from tagged field with explicit format",
 			opts: []loaderOption{
-				WithFS(afero.NewMemMapFs()),
+				WithFS(func() afero.Fs {
+					fs := afero.NewMemMapFs()
+					_ = afero.WriteFile(fs, "config.yaml", []byte("name: YAMLApp\nport: 8080"), 0644)
+					return fs
+				}()),
 			},
-			field:  "ConfigFile",
-			format: FileFormatJSON,
 			obj: &struct {
-				ConfigFile int
+				ConfigFile string `confless:"config=true,format=yaml"`
+				Name       string
+				Port       int
 			}{
-				ConfigFile: 123,
+				ConfigFile: "config.yaml",
 			},
-			wantErr: true,
+			wantErr: false,
+			verify: func(t *testing.T, obj any) {
+				// Use reflection to get values to avoid type assertion issues with tags
+				v := reflect.ValueOf(obj).Elem()
+				name := v.FieldByName("Name").String()
+				port := int(v.FieldByName("Port").Int())
+				if name != "YAMLApp" {
+					t.Errorf("expected Name to be 'YAMLApp', got '%s'", name)
+				}
+				if port != 8080 {
+					t.Errorf("expected Port to be 8080, got %d", port)
+				}
+			},
 		},
 		{
-			name: "skip missing file from field",
+			name: "load from nested tagged field",
+			opts: []loaderOption{
+				WithFS(func() afero.Fs {
+					fs := afero.NewMemMapFs()
+					_ = afero.WriteFile(fs, "nested.json", []byte(`{"name": "NestedApp", "port": 7000}`), 0644)
+					return fs
+				}()),
+			},
+			obj: &struct {
+				Settings struct {
+					ConfigPath string `confless:"config=true"`
+				}
+				Name string
+				Port int
+			}{
+				Settings: struct {
+					ConfigPath string `confless:"config=true"`
+				}{
+					ConfigPath: "nested.json",
+				},
+			},
+			wantErr: false,
+			verify: func(t *testing.T, obj any) {
+				// Use reflection to get values to avoid type assertion issues with tags
+				v := reflect.ValueOf(obj).Elem()
+				name := v.FieldByName("Name").String()
+				port := int(v.FieldByName("Port").Int())
+				if name != "NestedApp" {
+					t.Errorf("expected Name to be 'NestedApp', got '%s'", name)
+				}
+				if port != 7000 {
+					t.Errorf("expected Port to be 7000, got %d", port)
+				}
+			},
+		},
+		{
+			name: "skip empty tagged field",
 			opts: []loaderOption{
 				WithFS(afero.NewMemMapFs()),
 			},
-			field:  "ConfigFile",
-			format: FileFormatJSON,
 			obj: &struct {
-				ConfigFile string
+				ConfigFile string `confless:"config=true"`
+				Name       string
+			}{
+				ConfigFile: "",
+			},
+			wantErr: false,
+			verify: func(t *testing.T, obj any) {
+				// Use reflection to get values to avoid type assertion issues with tags
+				v := reflect.ValueOf(obj).Elem()
+				name := v.FieldByName("Name").String()
+				if name != "" {
+					t.Errorf("expected Name to be empty, got '%s'", name)
+				}
+			},
+		},
+		{
+			name: "skip missing file from tagged field",
+			opts: []loaderOption{
+				WithFS(afero.NewMemMapFs()),
+			},
+			obj: &struct {
+				ConfigFile string `confless:"config=true"`
 				Name       string
 			}{
 				ConfigFile: "nonexistent.json",
 			},
 			wantErr: false,
 			verify: func(t *testing.T, obj any) {
-				cfg := obj.(*struct {
-					ConfigFile string
-					Name       string
-				})
-				if cfg.Name != "" {
-					t.Errorf("expected Name to be empty, got '%s'", cfg.Name)
+				// Use reflection to get values to avoid type assertion issues with tags
+				v := reflect.ValueOf(obj).Elem()
+				name := v.FieldByName("Name").String()
+				if name != "" {
+					t.Errorf("expected Name to be empty, got '%s'", name)
 				}
 			},
 		},
@@ -320,7 +386,6 @@ func Test_loader_RegisterFileField(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := NewLoader(tt.opts...)
-			l.RegisterFileField(tt.field, tt.format)
 			err := l.Load(tt.obj)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
