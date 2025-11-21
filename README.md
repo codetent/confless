@@ -26,6 +26,10 @@ go get github.com/codetent/confless
 ## 🚀 Quick Start
 
 ```go
+type Config struct {
+	  Port int
+}
+
 config := &Config{Port: 8080}
 
 confless.RegisterFile("config.json", confless.FileFormatJSON)
@@ -33,7 +37,11 @@ confless.RegisterEnv("APP")
 confless.RegisterFlags(flag.CommandLine)
 
 flag.Parse()
-confless.Load(config)
+
+err := confless.Load(config)
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 ## 📚 Basics
@@ -50,9 +58,9 @@ Types are taken from struct fields.
 The following basic types can be set from all sources:
 - string
 - bool
-- int
-- uint
-- float
+- int (and all variants: int8, int16, int32, int64)
+- uint (and all variants: uint8, uint16, uint32, uint64)
+- float32, float64
 
 Complex types like slices and maps can only be set directly in the struct or by loading values from files.
 
@@ -145,7 +153,7 @@ confless.Load(&config)
 ### Command-Line Flags
 
 Load configuration from Go's standard `flag` package.
-Matching flags are automatically detected and if set, their values will be used to populate the struct.
+Matching flags, that have been defined beforehand, are automatically detected and if set, their values will be used to populate the struct.
 
 ```go
 flag.String("name", "", "Application name")
@@ -169,6 +177,12 @@ confless.Load(&config)
 ## 💡 Example
 
 ```go
+type Config struct {
+    Name string
+    Port int
+    Config string `confless:"file"`
+}
+
 // Register flags to load
 flag.String("name", "", "the name of the object")
 
@@ -181,7 +195,7 @@ config := &Config{
 
 // Register sources to load
 confless.RegisterFile("config.json", confless.FileFormatJSON)
-// Config field is automatically detected via confless:"config=true" tag
+// Config field is automatically detected via confless:"file" tag
 confless.RegisterEnv("APP")
 confless.RegisterFlags(flag.CommandLine)
 
