@@ -53,7 +53,11 @@ func getValue(v reflect.Value, p string) (reflect.Value, error) {
 	// Traverse the path.
 	for len(parts) > 0 {
 		// If the value is a pointer, dereference it.
-		for v.Kind() == reflect.Ptr {
+		for v.Kind() == reflect.Pointer {
+			if v.IsNil() {
+				return reflect.Value{}, fmt.Errorf("value is nil at path: %s", p)
+			}
+
 			v = v.Elem()
 		}
 
@@ -70,6 +74,10 @@ func getValue(v reflect.Value, p string) (reflect.Value, error) {
 				return reflect.Value{}, fmt.Errorf("invalid index: %s", parts[0])
 			}
 
+			if index < 0 || index >= v.Len() {
+				return reflect.Value{}, fmt.Errorf("index out of bounds: %s", parts[0])
+			}
+
 			v = v.Index(index)
 		default:
 			return reflect.Value{}, fmt.Errorf("unsupported type: %s", v.Kind())
@@ -84,7 +92,7 @@ func getValue(v reflect.Value, p string) (reflect.Value, error) {
 
 func setValue(v reflect.Value, value any) error {
 	// If the value is a pointer, dereference it.
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 

@@ -249,6 +249,46 @@ func Test_getValue(t *testing.T) {
 			p:       "",
 			wantErr: true,
 		},
+		{
+			name: "slice index out of bounds (negative)",
+			v: reflect.ValueOf(TestStruct{
+				Items: []int{10, 20, 30},
+			}),
+			p:       "Items.-1",
+			wantErr: true,
+		},
+		{
+			name: "slice index out of bounds (too large)",
+			v: reflect.ValueOf(TestStruct{
+				Items: []int{10, 20, 30},
+			}),
+			p:       "Items.3",
+			wantErr: true,
+		},
+		{
+			name: "array index out of bounds (negative)",
+			v: reflect.ValueOf(TestStruct{
+				Array: [3]string{"a", "b", "c"},
+			}),
+			p:       "Array.-1",
+			wantErr: true,
+		},
+		{
+			name: "array index out of bounds (too large)",
+			v: reflect.ValueOf(TestStruct{
+				Array: [3]string{"a", "b", "c"},
+			}),
+			p:       "Array.3",
+			wantErr: true,
+		},
+		{
+			name: "empty slice index out of bounds",
+			v: reflect.ValueOf(TestStruct{
+				Items: []int{},
+			}),
+			p:       "Items.0",
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
