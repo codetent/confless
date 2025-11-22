@@ -31,7 +31,7 @@ func populateByFlags(fset *flag.FlagSet, obj any) error {
 		// Replace the dash in the key with a dot.
 		key := strings.ReplaceAll(f.Name, "-", ".")
 
-		// Set the value at the given path.
+		// Set the value at the given path (ignore errors).
 		_ = dotpath.Set(obj, key, f.Value.String())
 	})
 
@@ -41,15 +41,20 @@ func populateByFlags(fset *flag.FlagSet, obj any) error {
 // Populate the object by environment variables with the given prefix.
 // Overrides existing values only if set in the environment variables.
 // Names are converted to dot-separated paths (e.g. "MY_FLAG" -> "my.flag").
-func populateByEnv(env []string, pre string, obj any) error {
+func populateByEnv(envs []string, pre string, obj any) error {
+	// If the prefix is empty, do nothing.
+	if pre == "" {
+		return nil
+	}
+
 	// Check if the object is a pointer.
-	if reflect.TypeOf(obj).Kind() != reflect.Ptr {
+	if reflect.TypeOf(obj).Kind() != reflect.Pointer {
 		return ErrObjectNotAPointer
 	}
 
 	prefix := strings.ToLower(pre) + "_"
 
-	for _, env := range env {
+	for _, env := range envs {
 		// Split the environment variable into key and value.
 		parts := strings.SplitN(env, "=", 2)
 		if len(parts) != 2 {
