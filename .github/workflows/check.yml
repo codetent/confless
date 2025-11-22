@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/codetent/confless/dev:sha-382640a
+      env:
+        GOFLAGS: -buildvcs=false
     steps:
     - uses: actions/checkout@v4
     - name: Lint
