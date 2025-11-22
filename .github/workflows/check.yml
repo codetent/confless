@@ -12,15 +12,13 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/codetent/confless/dev:sha-382640a
+      env:
+        GOFLAGS: -buildvcs=false
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.25.4'
     - name: Lint
-      uses: golangci/golangci-lint-action@v8
-      with:
-        version: v2.6.1
+      run: task lint
     - name: Test
-      run: go test -v ./...
+      run: task test
