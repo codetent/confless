@@ -69,29 +69,8 @@ func (l *loader) RegisterFlags(f *flag.FlagSet) {
 
 // Populate the object by applying the registered sources.
 func (l *loader) Load(obj any) error {
-	files := make([]*configFile, 0, len(l.files))
-	files = append(files, l.files...)
-
-	// Add file paths from tagged fields.
-	for field, format := range findFileFields(obj) {
-		path := field.String()
-		if path == "" {
-			continue
-		}
-
-		format := fileFormat(format)
-		if format == "" {
-			format = FileFormatJSON
-		}
-
-		files = append(files, &configFile{
-			path:   path,
-			format: format,
-		})
-	}
-
 	// Load the files.
-	for _, file := range files {
+	for _, file := range l.files {
 		// Open the file.
 		f, err := l.fs.Open(file.path)
 		if err != nil {
@@ -124,6 +103,37 @@ func (l *loader) Load(obj any) error {
 		err := populateByEnv(l.envReader(), l.envPrefix, obj)
 		if err != nil {
 			return fmt.Errorf("failed to load env: %w", err)
+		}
+	}
+
+	// Load dynamically files.
+	for field, format := range findFileFields(obj) {
+		path := field.String()
+		if path == "" {
+			continue
+		}
+
+		format := fileFormat(format)
+		if format == "" {
+			format = FileFormatJSON
+		}
+
+		// Open the file.
+		f, err := l.fs.Open(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				// Skip if file does not exist.
+				continue
+			}
+
+			return fmt.Errorf("failed to open file: %w", err)
+		}
+
+		// Populate the object by the file.
+		err = populateByFile(f, string(format), obj)
+		_ = f.Close()
+		if err != nil {
+			return fmt.Errorf("failed to load file: %w", err)
 		}
 	}
 
