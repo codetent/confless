@@ -1,7 +1,8 @@
 {
-    "build": {
-        "dockerfile": "Dockerfile"
-    },
+    "image": "ghcr.io/codetent/confless/dev:sha-382640a",
+    "runArgs": [
+        "--platform=linux/amd64"
+    ],
     "extensions": [
         "golang.go"
     ]
