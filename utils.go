@@ -9,7 +9,7 @@ func MakeNewObject(t reflect.Type) any {
 	// Unwrap the type until it is not a pointer.
 	objType := t
 	depth := 0
-	for objType.Kind() == reflect.Ptr {
+	for objType.Kind() == reflect.Pointer {
 		objType = objType.Elem()
 		depth++
 	}
@@ -28,4 +28,17 @@ func MakeNewObject(t reflect.Type) any {
 	}
 
 	return obj.Interface()
+}
+
+// Unpacks the value if it is a pointer.
+func unpackValue(v reflect.Value) reflect.Value {
+	for v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return reflect.Value{}
+		}
+
+		v = v.Elem()
+	}
+
+	return v
 }
