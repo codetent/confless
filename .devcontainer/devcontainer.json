@@ -1,5 +1,5 @@
 {
-    "image": "ghcr.io/codetent/confless/dev:sha-382640a",
+    "image": "ghcr.io/codetent/confless/dev:sha-6fd6dc8",
     "runArgs": [
         "--platform=linux/amd64"
     ],
