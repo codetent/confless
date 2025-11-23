@@ -1,8 +1,13 @@
-package confless
+package reflectutil
 
 import (
 	"reflect"
 )
+
+// Returns a pointer to the given value.
+func PtrTo[T any](v T) *T {
+	return &v
+}
 
 // Creates a new object of the given type.
 func MakeNewObject(t reflect.Type) any {
@@ -31,7 +36,7 @@ func MakeNewObject(t reflect.Type) any {
 }
 
 // Unpacks the value if it is a pointer.
-func unpackValue(v reflect.Value) reflect.Value {
+func UnpackValue(v reflect.Value) reflect.Value {
 	for v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return reflect.Value{}

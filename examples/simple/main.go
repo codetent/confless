@@ -22,7 +22,7 @@ type Config struct {
 		Password string `json:"password"`
 	} `json:"database"`
 
-	Config string `confless:"file,format=yaml"`
+	Config string `confless:"file"`
 }
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 	// Read configuration from environment variables starting with "APP_"
 	confless.RegisterEnv("APP")
 	// Read configuration from config.json
-	confless.RegisterFile("files/config.json", confless.FileFormatJSON)
+	confless.RegisterFile("files/config.json")
 
 	// Parse flags before loading
 	flag.Parse()

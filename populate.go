@@ -13,10 +13,12 @@ import (
 	"github.com/goccy/go-yaml"
 
 	"github.com/codetent/confless/pkg/dotpath"
+	"github.com/codetent/confless/pkg/reflectutil"
 )
 
 var (
-	ErrObjectNotAPointer = errors.New("object is not a pointer")
+	ErrInvalidObject    = errors.New("invalid object")
+	ErrDecodeFileFailed = errors.New("failed to decode file")
 )
 
 // Populate the object by the given flags.
@@ -24,7 +26,7 @@ var (
 func populateByFlags(fset *flag.FlagSet, obj any) error {
 	// Check if the object is a pointer.
 	if reflect.TypeOf(obj).Kind() != reflect.Pointer {
-		return ErrObjectNotAPointer
+		return fmt.Errorf("%w: object is not a pointer", ErrInvalidObject)
 	}
 
 	fset.Visit(func(f *flag.Flag) {
@@ -49,7 +51,7 @@ func populateByEnv(envs []string, pre string, obj any) error {
 
 	// Check if the object is a pointer.
 	if reflect.TypeOf(obj).Kind() != reflect.Pointer {
-		return ErrObjectNotAPointer
+		return fmt.Errorf("%w: object is not a pointer", ErrInvalidObject)
 	}
 
 	prefix := strings.ToLower(pre) + "_"
@@ -74,7 +76,7 @@ func populateByEnv(envs []string, pre string, obj any) error {
 		// Set the value at the given path.
 		err := dotpath.Set(obj, path, parts[1])
 		if err != nil {
-			return fmt.Errorf("failed to set path: %w", err)
+			return fmt.Errorf("failed to set path %s to %s: %w", path, parts[1], err)
 		}
 	}
 
@@ -86,26 +88,26 @@ func populateByEnv(envs []string, pre string, obj any) error {
 func populateByFile(r io.Reader, format string, obj any) error {
 	// Check if the object is a pointer.
 	if reflect.TypeOf(obj).Kind() != reflect.Pointer {
-		return ErrObjectNotAPointer
+		return fmt.Errorf("%w: object is not a pointer", ErrInvalidObject)
 	}
 
 	// Create a new object of the same type as the given object.
-	decoded := MakeNewObject(reflect.TypeOf(obj))
+	decoded := reflectutil.MakeNewObject(reflect.TypeOf(obj))
 
 	// Unmarshal the file based on the format.
 	switch format {
 	case "json":
 		err := json.NewDecoder(r).Decode(decoded)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal json: %w", err)
+			return fmt.Errorf("%w: %w", ErrDecodeFileFailed, err)
 		}
 	case "yaml":
 		err := yaml.NewDecoder(r).Decode(decoded)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal yaml: %w", err)
+			return fmt.Errorf("%w: %w", ErrDecodeFileFailed, err)
 		}
 	default:
-		return fmt.Errorf("unsupported format: %s", format)
+		return fmt.Errorf("unsupported file format: %s", format)
 	}
 
 	// Merge the decoded object into the given object.

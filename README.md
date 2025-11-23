@@ -32,7 +32,7 @@ type Config struct {
 
 config := &Config{Port: 8080}
 
-confless.RegisterFile("config.json", confless.FileFormatJSON)
+confless.RegisterFile("config.json")
 confless.RegisterEnv("APP")
 confless.RegisterFlags(flag.CommandLine)
 
@@ -80,12 +80,20 @@ Sources are applied in the following order (later sources override earlier ones)
 
 Load configuration from JSON or YAML files. Files are loaded in registration order and merged together. Missing files are silently skipped.
 
-```go
-// Register a JSON file
-confless.RegisterFile("config.json", confless.FileFormatJSON)
+The file format is automatically detected from the file extension.
+If the extension is not supported, the file format defaults to JSON.
 
-// Register a YAML file
-confless.RegisterFile("config.yaml", confless.FileFormatYAML)
+You can also explicitly specify the format using file options:
+
+```go
+// Register a JSON file (format detected automatically from .json extension)
+confless.RegisterFile("config.json")
+
+// Register a YAML file (format detected automatically from .yaml extension)
+confless.RegisterFile("config.yaml")
+
+// Register a file with explicit format override
+confless.RegisterFile("config.txt", confless.WithFileFormat(confless.FileFormatYAML))
 ```
 
 **Example `config.json`:**
@@ -113,7 +121,7 @@ database:
 
 You can mark a field in your configuration with the `confless:"file"` tag to automatically load it as a configuration file. This is useful for environment-specific configurations.
 
-The format can be specified explicitly in the tag (`confless:"file,format=yaml"`) otherwise it defaults to JSON.
+The format is automatically detected from the file extension (same rules as static file registration). You can also specify the format explicitly in the tag (`confless:"file,format=yaml"`) to override the automatic detection.
 
 Note that dynamically registered files are loaded at the end, while statically registered files are loaded first.
 
@@ -177,7 +185,7 @@ confless.Load(&config)
 ./app --name=MyApp --database-host=localhost
 ```
 
-## 💡 Example
+## 📝 Example
 
 ```go
 type Config struct {
@@ -197,7 +205,7 @@ config := &Config{
 }
 
 // Register sources to load
-confless.RegisterFile("config.json", confless.FileFormatJSON)
+confless.RegisterFile("config.json")
 // Config field is automatically detected via confless:"file" tag
 confless.RegisterEnv("APP")
 confless.RegisterFlags(flag.CommandLine)
@@ -219,4 +227,32 @@ APP_PORT=9000 ./app --name=MyApp
 # Sets port to 9000 instead of 8080 (default)
 # Sets name to "MyApp" instead of "DefaultApp" (default)
 # All other fields are loaded from the config.json file (if exists) or the default values are taken
+```
+
+For more examples, see the [examples](examples) directory.
+
+## 💡 Tips & Tricks
+
+### Validation
+
+Since confless just populates a struct, you can use any validation library to validate it after loading.
+
+One of the most popular is [validator](https://github.com/go-playground/validator).
+Just add the `validate` tag to the struct fields you want to validate and validate it using the library.
+
+```go
+validate := validator.New(validator.WithRequiredStructEnabled())
+err = validate.Struct(config)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Multiple Loaders
+
+If you need to load multiple configurations differently in one application, you can create multiple loaders instead of using the default global loader.
+
+```go
+loader := confless.NewLoader()
+loader.RegisterEnv("APP")
 ```
