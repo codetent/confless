@@ -174,7 +174,7 @@ confless.Load(&config)
 ./app --name=MyApp --database-host=localhost
 ```
 
-## 💡 Example
+## 📝 Example
 
 ```go
 type Config struct {
@@ -216,4 +216,32 @@ APP_PORT=9000 ./app --name=MyApp
 # Sets port to 9000 instead of 8080 (default)
 # Sets name to "MyApp" instead of "DefaultApp" (default)
 # All other fields are loaded from the config.json file (if exists) or the default values are taken
+```
+
+For more examples, see the [examples](examples) directory.
+
+## 💡 Tips & Tricks
+
+### Validation
+
+Since confless just populates a struct, you can use any validation library to validate it after loading.
+
+One of the most popular is [validator](https://github.com/go-playground/validator).
+Just add the `validate` tag to the struct fields you want to validate and validate it using the library.
+
+```go
+validate := validator.New(validator.WithRequiredStructEnabled())
+err = validate.Struct(config)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Multiple Loaders
+
+If you need to load multiple configurations differently in one application, you can create multiple loaders instead of using the default global loader.
+
+```go
+loader := confless.NewLoader()
+loader.RegisterEnv("APP")
 ```
