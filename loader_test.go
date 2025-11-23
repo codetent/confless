@@ -96,14 +96,14 @@ func Test_loader_RegisterFile(t *testing.T) {
 		name    string
 		opts    []loaderOption
 		path    string
-		format  fileFormat
+		fileOpts []fileOption
 		content string
 		obj     any
 		wantErr bool
 		verify  func(t *testing.T, obj any)
 	}{
 		{
-			name: "load from JSON file",
+			name: "load from JSON file with automatic format detection",
 			opts: []loaderOption{
 				WithFS(func() afero.Fs {
 					fs := afero.NewMemMapFs()
@@ -111,8 +111,8 @@ func Test_loader_RegisterFile(t *testing.T) {
 					return fs
 				}()),
 			},
-			path:   "config.json",
-			format: FileFormatJSON,
+			path:    "config.json",
+			fileOpts: []fileOption{},
 			obj: &struct {
 				Name     string
 				Database struct {
@@ -141,7 +141,7 @@ func Test_loader_RegisterFile(t *testing.T) {
 			},
 		},
 		{
-			name: "load from YAML file",
+			name: "load from YAML file with automatic format detection",
 			opts: []loaderOption{
 				WithFS(func() afero.Fs {
 					fs := afero.NewMemMapFs()
@@ -149,8 +149,66 @@ func Test_loader_RegisterFile(t *testing.T) {
 					return fs
 				}()),
 			},
-			path:   "config.yaml",
-			format: FileFormatYAML,
+			path:    "config.yaml",
+			fileOpts: []fileOption{},
+			obj: &struct {
+				Name string
+				Port int
+			}{},
+			wantErr: false,
+			verify: func(t *testing.T, obj any) {
+				cfg := obj.(*struct {
+					Name string
+					Port int
+				})
+				if cfg.Name != "MyApp" {
+					t.Errorf("expected Name to be 'MyApp', got '%s'", cfg.Name)
+				}
+				if cfg.Port != 8080 {
+					t.Errorf("expected Port to be 8080, got %d", cfg.Port)
+				}
+			},
+		},
+		{
+			name: "load from YML file with automatic format detection",
+			opts: []loaderOption{
+				WithFS(func() afero.Fs {
+					fs := afero.NewMemMapFs()
+					_ = afero.WriteFile(fs, "config.yml", []byte("name: MyApp\nport: 8080"), 0644)
+					return fs
+				}()),
+			},
+			path:    "config.yml",
+			fileOpts: []fileOption{},
+			obj: &struct {
+				Name string
+				Port int
+			}{},
+			wantErr: false,
+			verify: func(t *testing.T, obj any) {
+				cfg := obj.(*struct {
+					Name string
+					Port int
+				})
+				if cfg.Name != "MyApp" {
+					t.Errorf("expected Name to be 'MyApp', got '%s'", cfg.Name)
+				}
+				if cfg.Port != 8080 {
+					t.Errorf("expected Port to be 8080, got %d", cfg.Port)
+				}
+			},
+		},
+		{
+			name: "override format with WithFileFormat option",
+			opts: []loaderOption{
+				WithFS(func() afero.Fs {
+					fs := afero.NewMemMapFs()
+					_ = afero.WriteFile(fs, "config.txt", []byte("name: MyApp\nport: 8080"), 0644)
+					return fs
+				}()),
+			},
+			path:    "config.txt",
+			fileOpts: []fileOption{WithFileFormat(FileFormatYAML)},
 			obj: &struct {
 				Name string
 				Port int
@@ -178,8 +236,8 @@ func Test_loader_RegisterFile(t *testing.T) {
 					return fs
 				}()),
 			},
-			path:   "config.json",
-			format: FileFormatJSON,
+			path:    "config.json",
+			fileOpts: []fileOption{},
 			obj: &struct {
 				Name string
 				Port int
@@ -206,8 +264,8 @@ func Test_loader_RegisterFile(t *testing.T) {
 			opts: []loaderOption{
 				WithFS(afero.NewMemMapFs()),
 			},
-			path:   "nonexistent.json",
-			format: FileFormatJSON,
+			path:    "nonexistent.json",
+			fileOpts: []fileOption{},
 			obj: &struct {
 				Name string
 			}{},
@@ -219,11 +277,40 @@ func Test_loader_RegisterFile(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "file without extension defaults to JSON",
+			opts: []loaderOption{
+				WithFS(func() afero.Fs {
+					fs := afero.NewMemMapFs()
+					_ = afero.WriteFile(fs, "config", []byte(`{"name": "MyApp", "port": 8080}`), 0644)
+					return fs
+				}()),
+			},
+			path:    "config",
+			fileOpts: []fileOption{},
+			obj: &struct {
+				Name string
+				Port int
+			}{},
+			wantErr: false,
+			verify: func(t *testing.T, obj any) {
+				cfg := obj.(*struct {
+					Name string
+					Port int
+				})
+				if cfg.Name != "MyApp" {
+					t.Errorf("expected Name to be 'MyApp', got '%s'", cfg.Name)
+				}
+				if cfg.Port != 8080 {
+					t.Errorf("expected Port to be 8080, got %d", cfg.Port)
+				}
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := NewLoader(tt.opts...)
-			l.RegisterFile(tt.path, WithFileFormat(tt.format))
+			l.RegisterFile(tt.path, tt.fileOpts...)
 			err := l.Load(tt.obj)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
@@ -245,7 +332,7 @@ func Test_loader_ConfigTag(t *testing.T) {
 		verify  func(t *testing.T, obj any)
 	}{
 		{
-			name: "load from file path in tagged field",
+			name: "load from file path in tagged field with automatic format detection",
 			opts: []loaderOption{
 				WithFS(func() afero.Fs {
 					fs := afero.NewMemMapFs()
@@ -259,6 +346,36 @@ func Test_loader_ConfigTag(t *testing.T) {
 				Port       int
 			}{
 				ConfigFile: "production.json",
+			},
+			wantErr: false,
+			verify: func(t *testing.T, obj any) {
+				// Use reflection to get values to avoid type assertion issues with tags
+				v := reflect.ValueOf(obj).Elem()
+				name := v.FieldByName("Name").String()
+				port := int(v.FieldByName("Port").Int())
+				if name != "ProductionApp" {
+					t.Errorf("expected Name to be 'ProductionApp', got '%s'", name)
+				}
+				if port != 9000 {
+					t.Errorf("expected Port to be 9000, got %d", port)
+				}
+			},
+		},
+		{
+			name: "load from YAML file path in tagged field with automatic format detection",
+			opts: []loaderOption{
+				WithFS(func() afero.Fs {
+					fs := afero.NewMemMapFs()
+					_ = afero.WriteFile(fs, "production.yaml", []byte("name: ProductionApp\nport: 9000"), 0644)
+					return fs
+				}()),
+			},
+			obj: &struct {
+				ConfigFile string `confless:"file"`
+				Name       string
+				Port       int
+			}{
+				ConfigFile: "production.yaml",
 			},
 			wantErr: false,
 			verify: func(t *testing.T, obj any) {
