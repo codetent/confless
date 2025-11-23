@@ -6,6 +6,12 @@ var (
 	defaultLoader = NewLoader()
 )
 
+// Configure the default loader with the given options.
+// Note that reconfiguring the default loader will reset the registered sources.
+func Configure(opts ...loaderOption) {
+	defaultLoader = NewLoader(opts...)
+}
+
 // Register an environment variable prefix to load.
 // Names are converted to dot-separated paths (e.g. "MY_FLAG" -> "my.flag").
 func RegisterEnv(pre string) {

@@ -74,6 +74,7 @@ Sources are applied in the following order (later sources override earlier ones)
 1. **Files** (in registration order)
 2. **Command-line flags**
 3. **Environment variables** (highest precedence)
+4. **Dynamically registered files**
 
 ### Files
 
@@ -112,7 +113,9 @@ database:
 
 You can mark a field in your configuration with the `confless:"file"` tag to automatically load it as a configuration file. This is useful for environment-specific configurations.
 
-The format can be specified explicitly in the tag (`confless:"file,format=json"`) otherwise it defaults to JSON.
+The format can be specified explicitly in the tag (`confless:"file,format=yaml"`) otherwise it defaults to JSON.
+
+Note that dynamically registered files are loaded at the end, while statically registered files are loaded first.
 
 ```go
 type Config struct {
