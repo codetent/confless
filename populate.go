@@ -13,6 +13,7 @@ import (
 	"github.com/goccy/go-yaml"
 
 	"github.com/codetent/confless/pkg/dotpath"
+	"github.com/codetent/confless/pkg/reflectutil"
 )
 
 var (
@@ -90,7 +91,7 @@ func populateByFile(r io.Reader, format string, obj any) error {
 	}
 
 	// Create a new object of the same type as the given object.
-	decoded := MakeNewObject(reflect.TypeOf(obj))
+	decoded := reflectutil.MakeNewObject(reflect.TypeOf(obj))
 
 	// Unmarshal the file based on the format.
 	switch format {

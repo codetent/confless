@@ -4,6 +4,8 @@ import (
 	"iter"
 	"reflect"
 	"strings"
+
+	"github.com/codetent/confless/pkg/reflectutil"
 )
 
 // Parses the tag into a map of key-value pairs.
@@ -47,7 +49,7 @@ func findFileFields(o any) iter.Seq2[reflect.Value, string] {
 
 	return func(yield func(reflect.Value, string) bool) {
 		// If the value is not a struct, skip.
-		v = unpackValue(v)
+		v = reflectutil.UnpackValue(v)
 		if v.Kind() != reflect.Struct {
 			return
 		}
@@ -55,7 +57,7 @@ func findFileFields(o any) iter.Seq2[reflect.Value, string] {
 		// Iterate over the fields of the struct.
 		for i := 0; i < v.NumField(); i++ {
 			field := v.Type().Field(i)
-			value := unpackValue(v.Field(i))
+			value := reflectutil.UnpackValue(v.Field(i))
 
 			// Parse field tag.
 			kvs := parseTag(field.Tag)
