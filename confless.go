@@ -19,8 +19,8 @@ func RegisterEnv(pre string) {
 }
 
 // Register a file to load.
-func RegisterFile(path string, format fileFormat) {
-	defaultLoader.RegisterFile(path, format)
+func RegisterFile(path string, opts ...fileOption) {
+	defaultLoader.RegisterFile(path, opts...)
 }
 
 // Register the flags to load.

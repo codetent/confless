@@ -223,7 +223,7 @@ func Test_loader_RegisterFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := NewLoader(tt.opts...)
-			l.RegisterFile(tt.path, tt.format)
+			l.RegisterFile(tt.path, WithFileFormat(tt.format))
 			err := l.Load(tt.obj)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)

@@ -4,15 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/afero"
-)
-
-type fileFormat string
-
-const (
-	FileFormatJSON fileFormat = "json"
-	FileFormatYAML fileFormat = "yaml"
 )
 
 type configFile struct {
@@ -27,6 +22,19 @@ type loader struct {
 	envPrefix string
 	flagSets  []*flag.FlagSet
 	files     []*configFile
+}
+
+// Detect the file format based on the extension.
+func detectFileFormat(path string) fileFormat {
+	ext := filepath.Ext(path)
+	switch strings.ToLower(ext) {
+	case ".json":
+		return FileFormatJSON
+	case ".yaml", ".yml":
+		return FileFormatYAML
+	default:
+		return FileFormatJSON
+	}
 }
 
 // Creates a new loader with the given options.
@@ -53,11 +61,18 @@ func (l *loader) RegisterEnv(pre string) {
 }
 
 // Register a file to load.
-func (l *loader) RegisterFile(path string, format fileFormat) {
-	l.files = append(l.files, &configFile{
+func (l *loader) RegisterFile(path string, opts ...fileOption) {
+	file := &configFile{
 		path:   path,
-		format: format,
-	})
+		format: detectFileFormat(path),
+	}
+
+	// Apply the given options.
+	for _, opt := range opts {
+		opt(file)
+	}
+
+	l.files = append(l.files, file)
 }
 
 // Register the flags to load.
@@ -115,7 +130,7 @@ func (l *loader) Load(obj any) error {
 
 		format := fileFormat(format)
 		if format == "" {
-			format = FileFormatJSON
+			format = detectFileFormat(path)
 		}
 
 		// Open the file.
