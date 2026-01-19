@@ -3,7 +3,7 @@ module github.com/codetent/confless
 go 1.24.5
 
 require (
-	github.com/goccy/go-yaml v1.18.0
+	github.com/goccy/go-yaml v1.19.2
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cast v1.10.0
 )
