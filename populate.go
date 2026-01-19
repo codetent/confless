@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"strings"
 
-	"dario.cat/mergo"
 	"github.com/goccy/go-yaml"
 
 	"github.com/codetent/confless/pkg/dotpath"
+	"github.com/codetent/confless/pkg/merge"
 	"github.com/codetent/confless/pkg/reflectutil"
 )
 
@@ -111,7 +111,7 @@ func populateByFile(r io.Reader, format string, obj any) error {
 	}
 
 	// Merge the decoded object into the given object.
-	err := mergo.Merge(obj, decoded, mergo.WithOverride)
+	err := merge.Merge(obj, decoded)
 	if err != nil {
 		return fmt.Errorf("failed to merge: %w", err)
 	}

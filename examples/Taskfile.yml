@@ -11,6 +11,7 @@ tasks:
             cmd: >-
               APP_DATABASE_USERNAME=user
               APP_DATABASE_PASSWORD=pass
+              APP_TIME=2021-01-01T00:00:00Z
               go run main.go
               --debug
               --config=files/override.yaml
