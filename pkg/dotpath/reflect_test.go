@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+	"time"
 )
 
 // CustomUnmarshaler is a custom type that implements json.Unmarshaler for testing
@@ -433,13 +434,12 @@ func Test_setValue(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:  "json.Unmarshaler",
-			v:     reflect.ValueOf(new(CustomUnmarshaler)).Elem(),
-			value: "test",
+			name:  "text unmarshaler",
+			v:     reflect.ValueOf(new(time.Time)).Elem(),
+			value: "2021-01-01T00:00:00Z",
 			validate: func(t *testing.T, v reflect.Value) {
-				c := v.Interface().(CustomUnmarshaler)
-				if c.Value != "unmarshaled:test" {
-					t.Errorf("got %v, want unmarshaled:test", c.Value)
+				if v.Interface().(time.Time).Unix() != 1609459200 {
+					t.Errorf("got %v, want 1609459200", v.Interface().(time.Time).Unix())
 				}
 			},
 		},

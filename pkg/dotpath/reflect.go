@@ -1,13 +1,18 @@
 package dotpath
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/cast"
+)
+
+var (
+	ErrInvalidValue    = errors.New("invalid value")
+	ErrUnsupportedType = errors.New("unsupported type")
 )
 
 // Extract names from tags.
@@ -80,7 +85,7 @@ func getValue(v reflect.Value, p string) (reflect.Value, error) {
 
 			v = v.Index(index)
 		default:
-			return reflect.Value{}, fmt.Errorf("unsupported type: %s", v.Kind())
+			return reflect.Value{}, fmt.Errorf("%w: %s", ErrUnsupportedType, v.Kind())
 		}
 
 		// Pop the first part of the path.
@@ -98,22 +103,7 @@ func setValue(v reflect.Value, value any) error {
 
 	// If the value is not settable, return an error.
 	if !v.CanSet() {
-		return fmt.Errorf("value is not settable")
-	}
-
-	// If the value is a json.Unmarshaler, use it to unmarshal the value.
-	unmarshaler, ok := v.Addr().Interface().(json.Unmarshaler)
-	if ok {
-		b, err := json.Marshal(value)
-		if err != nil {
-			return fmt.Errorf("failed to marshal value: %w", err)
-		}
-
-		err = unmarshaler.UnmarshalJSON(b)
-		if err != nil {
-			return fmt.Errorf("failed to unmarshal value: %w", err)
-		}
-		return nil
+		return fmt.Errorf("%w: value is not settable", ErrInvalidValue)
 	}
 
 	// Handle basic types.
@@ -121,40 +111,41 @@ func setValue(v reflect.Value, value any) error {
 	case reflect.String:
 		c, err := cast.ToStringE(value)
 		if err != nil {
-			return fmt.Errorf("failed to cast value: %w", err)
+			return fmt.Errorf("%w: failed to cast value: %w", ErrInvalidValue, err)
 		}
 
 		v.SetString(c)
 	case reflect.Bool:
 		c, err := cast.ToBoolE(value)
 		if err != nil {
-			return fmt.Errorf("failed to cast value: %w", err)
+			return fmt.Errorf("%w: failed to cast value: %w", ErrInvalidValue, err)
 		}
 
 		v.SetBool(c)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		c, err := cast.ToInt64E(value)
 		if err != nil {
-			return fmt.Errorf("failed to cast value: %w", err)
+			return fmt.Errorf("%w: failed to cast value: %w", ErrInvalidValue, err)
 		}
 
 		v.SetInt(c)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		c, err := cast.ToUint64E(value)
 		if err != nil {
-			return fmt.Errorf("failed to cast value: %w", err)
+			return fmt.Errorf("%w: failed to cast value: %w", ErrInvalidValue, err)
 		}
 
 		v.SetUint(c)
 	case reflect.Float32, reflect.Float64:
 		c, err := cast.ToFloat64E(value)
 		if err != nil {
-			return fmt.Errorf("failed to cast value: %w", err)
+			return fmt.Errorf("%w: failed to cast value: %w", ErrInvalidValue, err)
 		}
 
 		v.SetFloat(c)
 	default:
-		return fmt.Errorf("unsupported type: %s", v.Kind())
+		// Try to unmarshal the value using the custom unmarshaler.
+		return unmarshalText(v, value)
 	}
 
 	return nil
