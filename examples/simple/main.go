@@ -5,15 +5,17 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 
 	"github.com/codetent/confless"
 )
 
 type Config struct {
-	Name  string `json:"name"`
-	Host  string `json:"host"`
-	Port  int    `json:"port"`
-	Debug bool   `json:"debug"`
+	Name  string    `json:"name"`
+	Host  string    `json:"host"`
+	Port  int       `json:"port"`
+	Debug bool      `json:"debug"`
+	Time  time.Time `json:"time"`
 
 	Database struct {
 		Host     string `json:"host"`
